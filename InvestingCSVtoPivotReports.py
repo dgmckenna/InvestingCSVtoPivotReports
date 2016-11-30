@@ -1,11 +1,7 @@
 #! python3
 
-# Version 08 #########
-# Todo:
-# check all comments
-# Done:
-# remove fixed source path
-# remove pprint
+# Updated 2016-11
+# Works with the "new" webbroker csv export file format.
 
 
 # Ribbon_CSV Personal Finance Python Scripting Program
@@ -89,9 +85,10 @@ def initialize_pvt_data(pvt_data):
 # This routine sets the columns that will appear in the pivot
 # table data.
     
+
+    
     header_row = [
         'Date', 'Account' , 'Account Currency', 'Account Type',
-        #Remainder matches order from CSV file
         'Symbol', 'Security',  'Quantity',  'Price',  'Book Value',
         'Market Value',  'Unrealized $',  'Gain/Loss %'
         ]
@@ -104,17 +101,14 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
 # a TD waterhouse file) and extracts the date, account information
 # and security information. The extracted information is 
 # appended to the pvt_data list.
-# NOTE: this routine is written for the "old" webbroker website.
-# the "new" webbroker (introduced 2015-12) has a different format
-# for the CSV files and will require a new routine.
     
     csv_reader_file = open(CSVFilePath)
     csv_reader = csv.reader(csv_reader_file)
     csv_data = list (csv_reader)
     
     # The CSV file structure is:
-    # ['As of Date', '29-Aug-2015', '', '', '', ''],
-    # ['Account', 'ACCOUNT_NO - CDN Cash TD Direct Investing', '', '', '', ''],   (Note: CDN Cash might be TFSA, or RRSP)
+    # [As of Date,2016-10-21 11:17:48],
+    # [Account,TD Direct Investing - 538R77A],   (Note: CDN Cash might be TFSA, or RRSP)
     # ['Cash Balance (after settlement)', '[numeric_value]', '', '', '', ''],
     # ['Securities Market Value', '[numeric_value]', '', '', '', ''],
     # ['Total Account Value', '[numeric_value]', '', '', '', ''],
@@ -126,8 +120,8 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
     # Extract the date from the file, and re-format it to a date time object
     # in YYYY-MM-DD
     
-    file_date_string = csv_data[0][1]
-    file_date = datetime.datetime.strptime(file_date_string, '%d-%b-%Y').strftime('%Y-%m-%d')
+    file_date_string = csv_data[0][1].split()[0]
+    file_date = datetime.datetime.strptime(file_date_string, '%Y-%m-%d').strftime('%Y-%m-%d')
 
     # Extract the account number information and split it into a list
     # Account info list:
@@ -148,16 +142,33 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
 
         row = []
         row.append (file_date) #Date
-        row.append (account_info_list[0]) #account number
-        row.append (account_info_list[2]) #currency
-        row.append (account_info_list[3]) #account type
+        row.append (account_info_list[4]) #account number
+        row.append ('') #currency
+        if account_info_list[4][-1] == 'S':
+            row.append('SDRSP')
+        elif account_info_list[4][-1] == 'J':
+            row.append('TFSA')
+        else:
+            row.append('Cash')
+        
+        #append for account type
+        
 
         # Copy all items from the exported CSV file, (except %holding which deleted),
         # into our row. This provides data like name, description, quantity, etc.
-        for csv_item in csv_data[i]:
-            row.append(csv_item)
+        row.append(csv_data[i][0]) #symbol
+        row.append(csv_data[i][2]) #desc
+        row.append(csv_data[i][3]) #qty
+        row.append(csv_data[i][5]) #price
+        #row.append(csv_data[i][4]) #cost
+        row.append(csv_data[i][6]) #book value
+        row.append(csv_data[i][7]) #market value
+        row.append(csv_data[i][8]) #unrealized $
+        row.append(csv_data[i][9]) #unrealized percentage
+        
         row.insert(7,'') #placeholder for the Category, which comes from a Vlookup added later
         pvt_data.append (row)
+        print (row)
 
         # Extract the security description, and add it to a dictionary.
         # We need to build a list of all the securities that are in the files
@@ -168,11 +179,11 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
         # may be issues where two different securities would have the same symbol on different
         # markets, however it is highly unlikely they would have the same description.
         
-        security_desc = csv_data[i][1]
+        security_desc = csv_data[i][2]  #changed from [1]
         security_symbol = csv_data[i][0]
         
         #make a dictionary with description as the key, then symbol as the value
-        security_dict[security_desc] = security_symbol 
+        security_dict[security_desc] = security_symbol
 
 
 
@@ -191,7 +202,9 @@ def write_source_data_tab(wb, pvt_data):
     #From the data extracted from the CSV, populate the tab with
     #data that could be used in a pivot table format
     for security_index in range (0, len(pvt_data)):
+        print (pvt_data[security_index])
         for col in range (0, len(pvt_data[0])):
+            #print (col)
             if col == 0 and security_index > 0:
                 date_info_temp = pvt_data[security_index][col].split('-')
                 sheet[letters[col]+str(security_index+1)] = datetime.datetime(
@@ -244,7 +257,8 @@ def write_asset_alloc_tab(wb, security_dict):
     #Compare the list of existing securities against the list of securities in the security_dict
     #security dict it loaded from the sourceData, and from the offline tab
 
-    new_securities = []
+    print (security_dict)
+    
     for security in security_dict.keys():
         if security not in existing_securities_list:
             new_securities.append(security)
