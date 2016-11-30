@@ -10,8 +10,6 @@ openpyxl module - installed via pip install openpyxsl
 
 Python 3.4
 
-Note: a compiled Windows version (created with cxFreeze) is in the exe.win32-3.4 folder.
-
 Quick Start:
 
 INITIAL USAGE:
