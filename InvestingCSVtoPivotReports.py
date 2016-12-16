@@ -43,7 +43,7 @@ import string
 import csv
 import openpyxl
 
-from openpyxl.cell import get_column_letter
+from openpyxl.utils import get_column_letter
 
 # Constants for excel file
 SOURCE_DATA_TAB = 'SourceData'
@@ -84,9 +84,9 @@ def setup_excel_file(output_excel_filename):
 def initialize_pvt_data(pvt_data):
 # This routine sets the columns that will appear in the pivot
 # table data.
-    
 
-    
+
+
     header_row = [
         'Date', 'Account' , 'Account Currency', 'Account Type',
         'Symbol', 'Security',  'Quantity',  'Price',  'Book Value',
@@ -99,13 +99,13 @@ def initialize_pvt_data(pvt_data):
 def read_CSV_file(CSVFilePath, security_dict, pvt_data):
 # This routine opens a CSV file (that has already been identified as
 # a TD waterhouse file) and extracts the date, account information
-# and security information. The extracted information is 
+# and security information. The extracted information is
 # appended to the pvt_data list.
-    
+
     csv_reader_file = open(CSVFilePath)
     csv_reader = csv.reader(csv_reader_file)
     csv_data = list (csv_reader)
-    
+
     # The CSV file structure is:
     # [As of Date,2016-10-21 11:17:48],
     # [Account,TD Direct Investing - 538R77A],   (Note: CDN Cash might be TFSA, or RRSP)
@@ -119,7 +119,7 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
 
     # Extract the date from the file, and re-format it to a date time object
     # in YYYY-MM-DD
-    
+
     file_date_string = csv_data[0][1].split()[0]
     file_date = datetime.datetime.strptime(file_date_string, '%Y-%m-%d').strftime('%Y-%m-%d')
 
@@ -128,8 +128,8 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
     # 0=account number, 2=Currency, 3=account type SDRSP/TFSA/ETC. XXXXXXX - CDN TFSA TD Direct Investing
 
     account_string = csv_data[1][1]
-    account_info_list = account_string.split(' ') 
-    
+    account_info_list = account_string.split(' ')
+
     # Loop through all of the securities information in the CSV file.
     # We skip the first 8 rows to get directly to the securities information.
     # For each item, build a record to insert into our pvt data, by taking
@@ -150,9 +150,9 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
             row.append('TFSA')
         else:
             row.append('Cash')
-        
+
         #append for account type
-        
+
 
         # Copy all items from the exported CSV file, (except %holding which deleted),
         # into our row. This provides data like name, description, quantity, etc.
@@ -165,7 +165,7 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
         row.append(csv_data[i][7]) #market value
         row.append(csv_data[i][8]) #unrealized $
         row.append(csv_data[i][9]) #unrealized percentage
-        
+
         row.insert(7,'') #placeholder for the Category, which comes from a Vlookup added later
         pvt_data.append (row)
         print (row)
@@ -178,10 +178,10 @@ def read_CSV_file(CSVFilePath, security_dict, pvt_data):
         # files not having the market (ie. Canadian Market, or US market, or other). There
         # may be issues where two different securities would have the same symbol on different
         # markets, however it is highly unlikely they would have the same description.
-        
+
         security_desc = csv_data[i][2]  #changed from [1]
         security_symbol = csv_data[i][0]
-        
+
         #make a dictionary with description as the key, then symbol as the value
         security_dict[security_desc] = security_symbol
 
@@ -212,7 +212,7 @@ def write_source_data_tab(wb, pvt_data):
                                                                                 int(date_info_temp[1]),
                                                                                 int(date_info_temp[2])
                                                                                 )
-            
+
             elif is_number(pvt_data[security_index][col]):
                 #Added float checking and casting to have numbers as numbers instead of text
                 sheet[letters[col]+str(security_index+1)] = (
@@ -237,17 +237,17 @@ def write_asset_alloc_tab(wb, security_dict):
     # compare the securities already in the tab, with the securities in the csv
     # identify new securities, and write them into the tab with "undefined"
     # as the asset allocation
-    
+
     #If you cannot find it, then add it in, and mark it as "undefined"
-    sheet = wb.get_sheet_by_name(ASSET_ALLOC_TAB) 
+    sheet = wb.get_sheet_by_name(ASSET_ALLOC_TAB)
     sheet['A1'] = 'Symbol'
     sheet['B1'] = 'Security'
     sheet['C1'] = 'Category'
 
     #Build a list of existing securities in the asset allocation tab
 
-    if sheet.get_highest_row() > 1:
-        existing_securities = tuple(sheet['B2':'B' + str(sheet.get_highest_row())])
+    if sheet.max_row > 1:
+        existing_securities = tuple(sheet['B2':'B' + str(sheet.max_row)])
         for row_of_cell_objects in existing_securities:
             for cell in row_of_cell_objects:
                 existing_securities_list.append(cell.value)
@@ -258,12 +258,12 @@ def write_asset_alloc_tab(wb, security_dict):
     #security dict it loaded from the sourceData, and from the offline tab
 
     print (security_dict)
-    
+
     for security in security_dict.keys():
         if security not in existing_securities_list:
             new_securities.append(security)
 
-    int_insert_row = sheet.get_highest_row() + 1
+    int_insert_row = sheet.max_row + 1
 
     # Write the new securities into the list of securities tab on the excel file
     # mark them as category "undefined"
@@ -288,7 +288,7 @@ def copy_offline_data(wb, security_dict):
 
     offline_sheet = wb.get_sheet_by_name(OFFLINE_DATA_TAB)
     source_sheet = wb.get_sheet_by_name(SOURCE_DATA_TAB)
-    
+
     offline_sheet['A1'] = 'Date'
     offline_sheet['B1'] = 'Account'
     offline_sheet['E1'] = 'Symbol'
@@ -296,23 +296,23 @@ def copy_offline_data(wb, security_dict):
     offline_sheet['J1'] = 'Book Value'
     offline_sheet['K1'] = 'Market Value'
 
-    int_insert_row = int(source_sheet.get_highest_row())
+    int_insert_row = source_sheet.max_row
     int_insert_col = 1
 
     # Load all the Symbol(Vlookup) names from the offline into the security_dict, this ensures they
     # are added to the AssetAllocationLookup with "undefined" if necessary
-    
-    if offline_sheet.get_highest_row() > 1:
-        offline_securities = tuple(offline_sheet['F2':'F' + str(offline_sheet.get_highest_row())])
+
+    if offline_sheet.max_row > 1:
+        offline_securities = tuple(offline_sheet['F2':'F' + str(offline_sheet.max_row)])
         for row_securities in offline_securities:
             for cell in row_securities:
                 security_dict[cell.value] = cell.value
-        
+
 
     # If the offline sheet has items, loop through each row and copy the values into the
     # source data sheet (where we build the pivot table source data).
-    if offline_sheet.get_highest_row() > 1:
-        offline_securities = tuple(offline_sheet['A2':'K' + str(offline_sheet.get_highest_row())])
+    if offline_sheet.max_row > 1:
+        offline_securities = tuple(offline_sheet['A2':'K' + str(offline_sheet.max_row)])
         for row in offline_securities:
             int_insert_col = 1
             int_insert_row += 1
@@ -324,8 +324,8 @@ def copy_offline_data(wb, security_dict):
             source_sheet.cell(row=int_insert_row, column=8).value = (
                 '=vlookup(F' + str(int_insert_row) + ',' + ASSET_ALLOC_NAME_RANGE  + ',2,false)'
                 )
-                
-    
+
+
 
 def setup_named_ranges(wb):
     # Setup a named range called "PivotData"
@@ -336,20 +336,20 @@ def setup_named_ranges(wb):
     source_sheet = wb.get_sheet_by_name(SOURCE_DATA_TAB)
     wb.create_named_range (
         PIVOT_DATA_NAME_RANGE,source_sheet,
-        'A1:' + get_column_letter(source_sheet.get_highest_column())
-            + str(source_sheet.get_highest_row())
+        'A1:' + get_column_letter(source_sheet.max_column)
+            + str(source_sheet.max_row)
         )
 
     # This second named range, is created for the vlookup in the source data.
     # The source data does a vlookup of the asset allocation information
-    
+
     asset_sheet = wb.get_sheet_by_name(ASSET_ALLOC_TAB)
     wb.create_named_range (
         ASSET_ALLOC_NAME_RANGE, asset_sheet,
-        'B2:' + get_column_letter(asset_sheet.get_highest_column())
-            + str(asset_sheet.get_highest_row())
+        'B2:' + get_column_letter(asset_sheet.max_column)
+            + str(asset_sheet.max_row)
         )
-      
+
 
 
 
@@ -400,14 +400,14 @@ write_asset_alloc_tab(wb,security_dict)
 
 # Update the named ranges
 setup_named_ranges(wb)
-wb.save (output_excel_filename) 
+wb.save (output_excel_filename)
 
 if found_one_file == False:
     print(
         'No Waterhouse CSV files found.\n'
         'Put Waterhouse CSV files in this folder, or subfolders of this folder.\n'
         )
-           
 
-print('Press Enter to Continue')    
+
+print('Press Enter to Continue')
 input()
