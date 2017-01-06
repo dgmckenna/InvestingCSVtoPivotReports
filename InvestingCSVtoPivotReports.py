@@ -333,6 +333,18 @@ def setup_named_ranges(wb):
     # It's useful to have a named range so you never have to reset your pivot
     # table data range, when you have more data.
 
+    named_ranges = wb.defined_names
+
+    # Added 2017-01-06
+    # New version of openpyxl has an issue if you add a named_range (now called defined_name)
+    # that already exists.
+    
+    wb.defined_names.delete(PIVOT_DATA_NAME_RANGE)
+    wb.defined_names.delete(ASSET_ALLOC_NAME_RANGE)
+
+    if PIVOT_DATA_NAME_RANGE in named_ranges:
+        del wb.defined_names[PIVOT_DATA_NAME_RANGE]
+
     source_sheet = wb.get_sheet_by_name(SOURCE_DATA_TAB)
     wb.create_named_range (
         PIVOT_DATA_NAME_RANGE,source_sheet,
