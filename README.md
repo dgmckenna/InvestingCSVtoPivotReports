@@ -1,60 +1,45 @@
 # InvestingCSVtoPivotReports
-Python application to convert TD Waterhouse (Canada) CSV export files to useful pivot table friendly data and reports
+Python application to consolidate TD Waterhouse (Canada) CSV export files into one file, including pulling in data from one, non TD Waterhouse File.
 
 Note: this program is not associated with TD Canada Trust in any way shape or form.
 Please read the licence agreement included with this project prior to using this software. The software is provided AS-IS.
 
+Once you have this one single CSV file, you can do your own PivotTable reporting and analysis, or to make it a lot more powerful, use Excel's PowerPivot features combined with the data model to add information about each asset. The wiki shows screenshots of what this means and what you can accomplish. In short, if you're using lots of vlookups, you should probably consider the data model instead. If you have Excel and PowerPivot setup properly, you do the following:
+
+1. Download new CSV files from waterhouse
+2. Update your offline.csv file with any assets you hold outside of TD waterhouse
+3. Open your excel file with PowerPivot
+4. Refresh all data sources -> The data model in the Excel updates from the CSV files
+5. Look at your reports
+
+This can allow you analyze your holdings with several minutes of work, and also allows you to analyze your, as well as your spouses assets all together.
+
+
 Requirements:
 
-openpyxl module - installed via pip install openpyxsl
+Python 3
 
-Python 3.4
 
-Quick Start:
+///////////////////////////
 
 INITIAL USAGE:
 1. Download the script
 
 2. Run the script
-
-3. Observe the PythonExcel.xlsx file has been created.
  
-4. Make a subdirectory with current date, in the script folder
+3. Make a CSV subdirectory, in that make a directory with the current date, in the CSV folder
 
-5. Login to TD Webbroker, and download CSV files for each account you have. Also download CSV files for other accounts (spouse, etc.) you wish to be compared together.
+4. Login to TD Webbroker, and download CSV files for each account you have. Also download CSV files for other accounts (spouse, etc.) you wish to be compared together.
 
-6. Move all the CSV files into the folder with the current date, in the script folder.
+5 Move all the CSV files into the folder with the current date, in the script folder.
 
-7. If you have any assets at other instutitons, open PythonExcel.xlsx and type the date, and market value into the "Offline" tab
+6. If you have any assets at other instutitons, the offline.csv file in the script folder and type in the details of these assets.
 
-8. Close PythonExcel.xlsx
+7. Run the script.
 
-9. Run the script.
+8. All assets are listed together in the consolidated.csv file
 
-10. Open PythonExcel_Pivot.xlsx
-
-11. Open PythonExcel.xlsx
-
-12. Go to the "AssetAllocationLookup" tab and enter in the category that you want each security recorded under (Canada, USA, International, Fixed Income)
-
-12. Click each chart/graph in PythonExcel_Pivot.xlsx and select "refresh data". If the graphs do not work, click "Source Data" in the ribbon, and then switch to the PythonExcel.xlsx file, and select all the available source data. When you select this it should convert the selection from a range (ie. A1:F333) to a named range "PivotData".
-
-SUBSEQUENT USAGE:
-1. Make a new folder with the current date.
-
-2. Download all CSV files.
-
-3. If you have any assets at other instutitons, open PythonExcel.xlsx and type the date, and market value into the "Offline" tab
-
-4. Close PythonExcel.xlsx
-
-5. Run the script.
-
-6. Open PythonExcel.xlsx - if any new assets have been added, update the "AssetAllocationLookup" tab to replace "undefined" with the desired category.
-
-7. Open PythonExcel_Pivot.xlsx
-
-8. Enjoy the reports
+9. REFER to Wiki for instructions on using PowerPivot in Excel
 
 --------------------------------------------------------
 
@@ -63,34 +48,26 @@ looking for all csv files. It will take TD Waterhouse
 downloaded CSV files, and extract the date, account information
 and list of securities from each file. The script consolidates
 all of the information together, and writes it into an
-excel file. The goal of this is all of the data is in one file
-with columns for date, account and a vlookup to create a column
-for "category" (ie. US equity, fixed income). This allows the use of
-pivot tables and pivot charts to easily look at such things as:
-current asset allocation, asset allocation by account (how much
-international equity in my RRSP, etc.
+excel file. The goal of this is all of the data is in one file.
+The data can then be linked with relationships to other tables,
+in the Excel Data Model (PowerPivot), to allow you to track:
+
+What percentage of my assets are in each asset class
+(fixed income, international, Canadian, etc.)?
+
+What percentage of my assets are in which accounts?
+
+Since all reporting is via pivot tables, you can filter and drill
+down to see the makeup. If for example you saw you had a lot
+of fixed income assets outside of a tax sheltered account, you
+could filter on fixed income and then view all the individual
+securities to help identify them.
+
 
 To support financial information that may be not available
-in TD waterhouse csv format, the excel file has an "offline" tab.
-Any entries made by hand into the "offline" tab are copied into
-the source data tab each time the script is run. This is useful
+in TD waterhouse csv format, the script creates an offline.csv
+file. Any entries made by hand into the "offline" file are copied into
+the consolidated.csv file  each time the script is run. This is useful
 if you have GIC's, assets at another institution or other items
 you wish to track.
-
-Note: you cannot have the pivot table, in the excel file that
-this script builds. This script uses a python library which
-cannot handle pivot tables. Instead, you have to have a separate
-file with a pivot table, but it reads it's source data
-from the file built by this Python script.
-
-The python_sample folder shows .csv downloaded files from Waterhouse
-in a folder structure, and includes sample results from the script,
-and a PythonExcel_Pivot.xlsx file with pivot table reports.
-
-The PythonExcel_Pivot.xlsx is also in the root of this project. To
-use, open the PythonExcel.xlsx file created when you run the script,
-and then open the PythonExcel_Pivot file. For the pivot table reports
-you want, click them, then select "select source data" and repoint
-them at your specific excel file on your computer, highlighting the
-PivotData named range on the "SourceData" tab.
 
